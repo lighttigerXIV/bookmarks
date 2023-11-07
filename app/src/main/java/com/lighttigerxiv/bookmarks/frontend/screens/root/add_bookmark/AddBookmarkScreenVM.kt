@@ -2,9 +2,11 @@ package com.lighttigerxiv.bookmarks.frontend.screens.root.add_bookmark
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.navigation.NavHostController
 import com.lighttigerxiv.bookmarks.backend.realm.Queries
 import com.lighttigerxiv.bookmarks.backend.realm.getRealm
 import com.lighttigerxiv.bookmarks.frontend.AppVM
+import com.lighttigerxiv.bookmarks.frontend.navigation.openMain
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -26,25 +28,20 @@ class AddBookmarkScreenVM : ViewModel() {
         _url.update { v }
     }
 
-    fun isSaveButtonDisabled(): Boolean{
+    fun isSaveButtonDisabled(): Boolean {
         return name.value.isEmpty() || url.value.isEmpty()
     }
 
-    fun addBookmark() {
-        viewModelScope.launch {
-            withContext(Dispatchers.IO) {
+    fun addBookmark(rootController: NavHostController) {
+        viewModelScope.launch(Dispatchers.Main) {
 
-                val realm = Queries(getRealm())
-                realm.addBookmark(
-                    name = name.value,
-                    url = url.value
-                )
-            }
+            rootController.openMain()
+
+            val realm = Queries(getRealm())
+            realm.addBookmark(
+                name = name.value,
+                url = url.value
+            )
         }
-    }
-
-    fun resetScreen(){
-        _name.update { "" }
-        _url.update { "" }
     }
 }

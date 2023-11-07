@@ -76,8 +76,7 @@ fun AddBookmarkScreen(
                 text = "Save",
                 disabled = vm.isSaveButtonDisabled(),
                 onClick = {
-                    vm.addBookmark()
-                    rootController.openMain()
+                    vm.addBookmark(rootController)
                 }
             )
         }

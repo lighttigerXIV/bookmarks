@@ -1,10 +1,5 @@
 package com.lighttigerxiv.bookmarks.frontend.screens.root.main.bookmarks
 
-import android.graphics.Bitmap
-import android.util.Log
-import android.webkit.WebChromeClient
-import android.webkit.WebView
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -24,50 +19,49 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
 import com.lighttigerxiv.bookmarks.R
 import com.lighttigerxiv.bookmarks.backend.realm.objects.Bookmark
 import com.lighttigerxiv.bookmarks.backend.utils.getFaviconUrl
+import com.lighttigerxiv.bookmarks.backend.utils.openUrl
 import com.lighttigerxiv.bookmarks.frontend.AppVM
 import com.lighttigerxiv.bookmarks.frontend.composables.HorizontalSpacer
 import com.lighttigerxiv.bookmarks.frontend.composables.NormalText
 import com.lighttigerxiv.bookmarks.frontend.composables.SpacerSize
 import com.lighttigerxiv.bookmarks.frontend.composables.TextField
 import com.lighttigerxiv.bookmarks.frontend.composables.VerticalSpacer
+import com.lighttigerxiv.bookmarks.frontend.navigation.openAbout
 import com.lighttigerxiv.bookmarks.frontend.navigation.openBookmark
-import kotlinx.coroutines.flow.collect
-import org.jetbrains.annotations.Async
+import com.lighttigerxiv.bookmarks.frontend.navigation.openSettings
 
 @Composable
 fun BookmarksScreen(
-    rootController: NavHostController
+    rootController: NavHostController,
+    appVM: AppVM
 ) {
-
-    val appVM: AppVM = viewModel()
     val vm: BookmarksScreenVM = viewModel()
 
+    val settings = appVM.settings.collectAsState().value
     val screenInitialized = vm.screenInitialized.collectAsState().value
+    val requestedFocusSearch = appVM.requestedFocusSearch.collectAsState().value
     val bookmarks = appVM.bookmarks.collectAsState().value
     val currentBookmarks = vm.currentBookmarks.collectAsState().value
     val searchText = vm.searchText.collectAsState().value
+
 
     if (!screenInitialized) {
         vm.initScreen(bookmarks)
@@ -80,38 +74,100 @@ fun BookmarksScreen(
     Column {
 
         if (screenInitialized) {
-            Row {
+            if (bookmarks.isEmpty()) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize(),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
 
-                TextField(
-                    text = searchText,
-                    onTextChange = {
-                        vm.updateSearchText(it)
-                        vm.filterBookmarks(bookmarks)
-                    },
-                    placeholder = "Search Bookmarks",
-                    startIcon = R.drawable.search,
-                    onStartIconClick = {}
-                )
-            }
+                    NormalText(text = "No bookmarks found.")
+                }
+            } else {
+
+                Row {
+
+                    SearchMenu(vm, rootController)
+
+                    TextField(
+                        text = searchText,
+                        onTextChange = {
+                            vm.updateSearchText(it)
+                            vm.filterBookmarks(bookmarks)
+                        },
+                        placeholder = "Search Bookmarks",
+                        startIcon = R.drawable.menu,
+                        onStartIconClick = { vm.updateShowSearchMenu(true) },
+                        requestFocus = !requestedFocusSearch && settings!!.searchOnOpen,
+                        onFocusRequested = { appVM.updateRequestedFocusSearch(true) }
+                    )
+                }
 
 
-            VerticalSpacer(size = SpacerSize.Large)
+                VerticalSpacer(size = SpacerSize.Large)
 
-            LazyColumn {
-                items(
-                    items = currentBookmarks,
-                    key = { it._id.toHexString() }
-                ) { bookmark ->
+                LazyColumn {
+                    items(
+                        items = currentBookmarks,
+                        key = { it._id.toHexString() }
+                    ) { bookmark ->
 
-                    Column {
+                        Column {
 
-                        BookmarkCard(bookmark, vm, rootController)
+                            BookmarkCard(bookmark, vm, rootController)
 
-                        VerticalSpacer(size = SpacerSize.Small)
+                            VerticalSpacer(size = SpacerSize.Small)
+                        }
                     }
                 }
             }
         }
+    }
+}
+
+@Composable
+fun SearchMenu(
+    vm: BookmarksScreenVM,
+    rootController: NavHostController
+) {
+
+    val show = vm.showSearchMenu.collectAsState().value
+
+    DropdownMenu(expanded = show, onDismissRequest = { vm.updateShowSearchMenu(false) }) {
+        DropdownMenuItem(
+            text = { NormalText(text = "Settings") },
+            onClick = {
+                vm.updateShowSearchMenu(false)
+                rootController.openSettings()
+            },
+            leadingIcon = {
+                Icon(
+                    modifier = Modifier
+                        .size(20.dp),
+                    painter = painterResource(id = R.drawable.settings),
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurface
+                )
+            }
+        )
+
+        DropdownMenuItem(
+            text = { NormalText(text = "About") },
+            onClick = {
+                vm.updateShowSearchMenu(false)
+                rootController.openAbout()
+            },
+            leadingIcon = {
+                Icon(
+                    modifier = Modifier
+                        .size(20.dp),
+                    painter = painterResource(id = R.drawable.info),
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurface
+                )
+            }
+        )
     }
 }
 
@@ -123,6 +179,8 @@ fun BookmarkCard(
 ) {
 
     var showMenu by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+
 
     Row(
         modifier = Modifier
@@ -130,7 +188,7 @@ fun BookmarkCard(
             .clip(RoundedCornerShape(16.dp))
             .background(MaterialTheme.colorScheme.surfaceVariant)
             .clickable {
-                vm.openUrl(bookmark.url)
+                openUrl(context, bookmark.url)
             }
             .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically
@@ -155,6 +213,7 @@ fun BookmarkCard(
 
         Icon(
             modifier = Modifier
+                .size(20.dp)
                 .clip(CircleShape)
                 .clickable { showMenu = true },
             painter = painterResource(id = R.drawable.vertical_dots),
@@ -164,9 +223,9 @@ fun BookmarkCard(
 
         Column {
             BookmarkMenu(
+                show = showMenu,
                 vm = vm,
                 rootController = rootController,
-                showMenu = showMenu,
                 bookmark = bookmark,
                 onDismiss = { showMenu = false }
             )
@@ -176,14 +235,14 @@ fun BookmarkCard(
 
 @Composable
 fun BookmarkMenu(
+    show: Boolean,
     vm: BookmarksScreenVM,
     rootController: NavHostController,
-    showMenu: Boolean,
     bookmark: Bookmark,
     onDismiss: () -> Unit
 ) {
     DropdownMenu(
-        expanded = showMenu,
+        expanded = show,
         onDismissRequest = { onDismiss() }
     ) {
 
@@ -192,6 +251,7 @@ fun BookmarkMenu(
                 NormalText(text = "Edit")
             },
             onClick = {
+                onDismiss()
                 rootController.openBookmark(bookmark._id)
             },
             trailingIcon = {
@@ -207,8 +267,8 @@ fun BookmarkMenu(
                 NormalText(text = "Copy url")
             },
             onClick = {
-                vm.copyUrl(url = bookmark.url)
                 onDismiss()
+                vm.copyUrl(url = bookmark.url)
             },
             trailingIcon = {
                 Icon(

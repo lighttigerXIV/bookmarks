@@ -24,6 +24,11 @@ class BookmarkScreenVM() : ViewModel() {
     private val _screenInitialized = MutableStateFlow(false)
     val dataInitiated = _screenInitialized.asStateFlow()
 
+    private val _showDeleteDialog = MutableStateFlow(false)
+    val showDeleteDialog = _showDeleteDialog.asStateFlow()
+    fun updateShowDeleteDialog(v: Boolean) {
+        _showDeleteDialog.update { v }
+    }
 
     private val _name = MutableStateFlow("")
     val name = _name.asStateFlow()
@@ -39,28 +44,32 @@ class BookmarkScreenVM() : ViewModel() {
 
 
     fun initScreen(id: ObjectId, bookmarks: List<Bookmark>) {
-        viewModelScope.launch {
-            withContext(Dispatchers.IO) {
-                bookmark = bookmarks.find { it._id == id }
+        viewModelScope.launch(Dispatchers.Main) {
+            bookmark = bookmarks.find { it._id == id }
 
-                bookmark?.let { bookmark ->
-                    _name.update { bookmark.name }
-                    _url.update { bookmark.url }
+            bookmark?.let { bookmark ->
+                _name.update { bookmark.name }
+                _url.update { bookmark.url }
 
-                    _screenInitialized.update { true }
-                }
+                _screenInitialized.update { true }
             }
         }
     }
 
     fun editBookmark(id: ObjectId, rootController: NavHostController, appVM: AppVM) {
-        viewModelScope.launch {
-            withContext(Dispatchers.Main) {
+        viewModelScope.launch(Dispatchers.Main) {
+            val queries = Queries(getRealm())
+            queries.updateBookmark(id, name.value, url.value)
+            rootController.openMain()
+        }
+    }
 
-                val queries = Queries(getRealm())
-                queries.updateBookmark(id, name.value, url.value)
-                rootController.openMain()
-            }
+    fun deleteBookmark(id: ObjectId, rootController: NavHostController){
+        viewModelScope.launch(Dispatchers.Main){
+            val queries = Queries(getRealm())
+            queries.deleteBookmark(id)
+
+            rootController.openMain()
         }
     }
 }

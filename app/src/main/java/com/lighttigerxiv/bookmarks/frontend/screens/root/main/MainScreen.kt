@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -16,9 +17,11 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.BottomSheetScaffold
+import androidx.compose.material.BottomSheetScaffoldState
 import androidx.compose.material.BottomSheetState
 import androidx.compose.material.BottomSheetValue
 import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.ScaffoldState
 import androidx.compose.material.rememberBottomSheetScaffoldState
 import androidx.compose.material.rememberBottomSheetState
 import androidx.compose.material3.Icon
@@ -30,6 +33,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModelProvider
@@ -40,6 +44,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.lighttigerxiv.bookmarks.R
+import com.lighttigerxiv.bookmarks.backend.utils.onLandscape
 import com.lighttigerxiv.bookmarks.frontend.AppVM
 import com.lighttigerxiv.bookmarks.frontend.composables.HorizontalSpacer
 import com.lighttigerxiv.bookmarks.frontend.composables.NormalText
@@ -58,12 +63,14 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun MainScreen(
-    rootController: NavHostController
+    rootController: NavHostController,
+    appVM: AppVM
 ) {
 
     val mainController = rememberNavController()
     val sheetState = rememberBottomSheetState(initialValue = BottomSheetValue.Collapsed)
     val scaffoldState = rememberBottomSheetScaffoldState(bottomSheetState = sheetState)
+
 
 
     Column {
@@ -79,30 +86,63 @@ fun MainScreen(
             sheetShape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
         ) { scaffoldPadding ->
 
-            Column {
-                NavHost(
-                    modifier = Modifier
-                        .padding(scaffoldPadding)
-                        .fillMaxHeight()
-                        .weight(1f, fill = true)
-                        .padding(16.dp),
-                    navController = mainController,
-                    startDestination = Routes.Bookmarks
-                ) {
+            if(onLandscape()){
+                Row {
+                    NavigationBar(mainController, sheetState)
 
-                    composable(Routes.Bookmarks) {
-
-                        BookmarksScreen(rootController)
-                    }
-
-                    composable(Routes.Groups) {
-
-                        GroupsScreen()
-                    }
+                    MainHost(
+                        modifier = Modifier.weight(1f, fill = true),
+                        scaffoldPadding = scaffoldPadding,
+                        mainController = mainController,
+                        rootController = rootController,
+                        appVM = appVM
+                    )
                 }
+            }
+            Column {
+
+                MainHost(
+                    modifier = Modifier.weight(1f, fill = true),
+                    scaffoldPadding = scaffoldPadding,
+                    mainController = mainController,
+                    rootController = rootController,
+                    appVM = appVM
+                )
 
                 NavigationBar(mainController, sheetState)
             }
+        }
+    }
+}
+
+@Composable
+fun MainHost(
+    modifier: Modifier,
+    scaffoldPadding: PaddingValues,
+    mainController: NavHostController,
+    rootController: NavHostController,
+    appVM: AppVM
+) {
+
+    val settings = appVM.settings.collectAsState().value
+
+    NavHost(
+        modifier = modifier
+            .padding(scaffoldPadding)
+            .fillMaxHeight()
+            .padding(16.dp),
+        navController = mainController,
+        startDestination = if(settings!!.openGroupsByDefault) Routes.Groups else Routes.Bookmarks
+    ) {
+
+        composable(Routes.Bookmarks) {
+
+            BookmarksScreen(rootController, appVM)
+        }
+
+        composable(Routes.Groups) {
+
+            GroupsScreen(rootController, appVM)
         }
     }
 }
@@ -180,7 +220,7 @@ fun AddSheet(
                 horizontalArrangement = Arrangement.Center
             ) {
                 Icon(
-                    painter = painterResource(id = R.drawable.library),
+                    painter = painterResource(id = R.drawable.folder),
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.primary
                 )
@@ -194,8 +234,6 @@ fun AddSheet(
                 )
             }
         }
-
-
     }
 }
 
@@ -221,77 +259,152 @@ fun NavigationBar(controller: NavHostController, sheetState: BottomSheetState) {
         MaterialTheme.colorScheme.onSurface
     }
 
+    if (onLandscape()) {
 
-    Row(
-        modifier = Modifier
-            .height(70.dp)
-            .fillMaxWidth()
-            .padding(start = 16.dp, end = 16.dp)
-            .clip(CircleShape)
-            .background(MaterialTheme.colorScheme.surfaceVariant),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-
-        Row(
+        Column(
             modifier = Modifier
+                .width(120.dp)
                 .fillMaxHeight()
-                .fillMaxWidth()
-                .weight(1f, fill = true)
-                .clip(CircleShape)
-                .clickable { controller.openBookmarks() },
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center
+                .padding(16.dp)
+                .clip(RoundedCornerShape(24.dp))
+                .background(MaterialTheme.colorScheme.surfaceVariant),
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
 
-            Icon(
-                painter = painterResource(id = R.drawable.bookmark),
-                contentDescription = "Bookmarks Icon",
-                tint = bookmarksColor
-            )
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .fillMaxHeight()
+                    .weight(1f, fill = true)
+                    .clip(RoundedCornerShape(24.dp))
+                    .clickable { controller.openBookmarks() },
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
 
-            HorizontalSpacer(size = SpacerSize.Small)
-
-            NormalText(text = "Bookmarks", color = bookmarksColor)
-        }
-
-        Box(
-            modifier = Modifier
-                .border(
-                    width = 2.dp,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    shape = CircleShape
+                Icon(
+                    painter = painterResource(id = R.drawable.bookmark),
+                    contentDescription = "Bookmarks Icon",
+                    tint = bookmarksColor
                 )
-                .clip(CircleShape)
-                .clickable { scope.launch { sheetState.expand() } }
-                .padding(8.dp)
-        ) {
-            Icon(
-                painter = painterResource(id = R.drawable.plus),
-                contentDescription = "Add Button",
-                tint = MaterialTheme.colorScheme.onSurface
-            )
-        }
 
+                VerticalSpacer(size = SpacerSize.Small)
+
+                NormalText(text = "Bookmarks", color = bookmarksColor)
+            }
+
+            Box(
+                modifier = Modifier
+                    .border(
+                        width = 2.dp,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        shape = CircleShape
+                    )
+                    .clip(CircleShape)
+                    .clickable { scope.launch { sheetState.expand() } }
+                    .padding(8.dp)
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.plus),
+                    contentDescription = "Add Button",
+                    tint = MaterialTheme.colorScheme.onSurface
+                )
+            }
+
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .fillMaxHeight()
+                    .weight(1f, fill = true)
+                    .clip(RoundedCornerShape(24.dp))
+                    .clickable { controller.openGroups() },
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+
+                Icon(
+                    painter = painterResource(id = R.drawable.folder),
+                    contentDescription = "Groups Icon",
+                    tint = groupsColor
+                )
+
+                VerticalSpacer(size = SpacerSize.Small)
+
+                NormalText(text = "Groups", color = groupsColor)
+            }
+        }
+    } else {
         Row(
             modifier = Modifier
-                .fillMaxHeight()
+                .height(70.dp)
                 .fillMaxWidth()
-                .weight(1f, fill = true)
-                .clip(CircleShape)
-                .clickable { controller.openGroups() },
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center
+                .padding(start = 16.dp, end = 16.dp)
+                .clip(RoundedCornerShape(24.dp))
+                .background(MaterialTheme.colorScheme.surfaceVariant),
+            verticalAlignment = Alignment.CenterVertically
         ) {
 
-            Icon(
-                painter = painterResource(id = R.drawable.library),
-                contentDescription = "Library Icon",
-                tint = groupsColor
-            )
+            Row(
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .fillMaxWidth()
+                    .weight(1f, fill = true)
+                    .clip(RoundedCornerShape(24.dp))
+                    .clickable { controller.openBookmarks() },
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
+            ) {
 
-            HorizontalSpacer(size = SpacerSize.Small)
+                Icon(
+                    painter = painterResource(id = R.drawable.bookmark),
+                    contentDescription = "Bookmarks Icon",
+                    tint = bookmarksColor
+                )
 
-            NormalText(text = "Groups", color = groupsColor)
+                HorizontalSpacer(size = SpacerSize.Small)
+
+                NormalText(text = "Bookmarks", color = bookmarksColor)
+            }
+
+            Box(
+                modifier = Modifier
+                    .border(
+                        width = 2.dp,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        shape = CircleShape
+                    )
+                    .clip(CircleShape)
+                    .clickable { scope.launch { sheetState.expand() } }
+                    .padding(8.dp)
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.plus),
+                    contentDescription = "Add Button",
+                    tint = MaterialTheme.colorScheme.onSurface
+                )
+            }
+
+            Row(
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .fillMaxWidth()
+                    .weight(1f, fill = true)
+                    .clip(RoundedCornerShape(24.dp))
+                    .clickable { controller.openGroups() },
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
+            ) {
+
+                Icon(
+                    painter = painterResource(id = R.drawable.folder),
+                    contentDescription = "Library Icon",
+                    tint = groupsColor
+                )
+
+                HorizontalSpacer(size = SpacerSize.Small)
+
+                NormalText(text = "Groups", color = groupsColor)
+            }
         }
     }
 }

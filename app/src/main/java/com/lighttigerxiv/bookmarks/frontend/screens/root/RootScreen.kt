@@ -5,10 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
-import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.ViewModelStoreOwner
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -16,17 +13,18 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.lighttigerxiv.bookmarks.frontend.AppVM
 import com.lighttigerxiv.bookmarks.frontend.navigation.Routes
+import com.lighttigerxiv.bookmarks.frontend.screens.root.about.AboutScreen
 import com.lighttigerxiv.bookmarks.frontend.screens.root.add_bookmark.AddBookmarkScreen
 import com.lighttigerxiv.bookmarks.frontend.screens.root.add_group.AddGroupScreen
 import com.lighttigerxiv.bookmarks.frontend.screens.root.main.MainScreen
-import com.lighttigerxiv.bookmarks.frontend.screens.root.main.MainScreenVM
 import com.lighttigerxiv.bookmarks.frontend.screens.root.main.bookmarks.bookmark.BookmarkScreen
+import com.lighttigerxiv.bookmarks.frontend.screens.root.main.groups.group.GroupScreen
+import com.lighttigerxiv.bookmarks.frontend.screens.root.settings.SettingsScreen
 import org.mongodb.kbson.ObjectId
 
 @Composable
 fun RootScreen(
-    appVM: AppVM,
-    owner: ViewModelStoreOwner
+    appVM: AppVM
 ) {
 
     val rootController = rememberNavController()
@@ -44,7 +42,8 @@ fun RootScreen(
         ) {
             composable(Routes.Main) {
                 MainScreen(
-                    rootController = rootController
+                    rootController = rootController,
+                    appVM = appVM
                 )
             }
 
@@ -55,7 +54,7 @@ fun RootScreen(
 
             composable(Routes.AddGroup) {
 
-                AddGroupScreen(rootController)
+                AddGroupScreen(rootController, appVM)
             }
 
             composable(
@@ -67,8 +66,36 @@ fun RootScreen(
 
                 BookmarkScreen(
                     id = ObjectId(it.arguments!!.getString("id")!!),
+                    appVM = appVM,
                     rootController = rootController
                 )
+            }
+
+            composable(
+                "${Routes.Group}/{id}",
+                arguments = listOf(
+                    navArgument("id") { type = NavType.StringType }
+                )
+            ) {
+
+                GroupScreen(
+                    id = ObjectId(it.arguments!!.getString("id")!!),
+                    appVM = appVM,
+                    rootController = rootController
+                )
+            }
+
+            composable(Routes.Settings){
+
+                SettingsScreen(
+                    appVM,
+                    rootController
+                )
+            }
+
+            composable(Routes.About){
+
+                AboutScreen(rootController)
             }
         }
     }

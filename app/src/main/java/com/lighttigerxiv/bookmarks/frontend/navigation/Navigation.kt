@@ -7,9 +7,9 @@ import androidx.navigation.NavGraph.Companion.findStartDestination
 import com.lighttigerxiv.bookmarks.frontend.screens.root.add_bookmark.AddBookmarkScreenVM
 import org.mongodb.kbson.ObjectId
 
-fun goToNavbarRoute(controller: NavController, route: String){
-    controller.navigate(route){
-        popUpTo(controller.graph.findStartDestination().id){
+fun goToNavbarRoute(controller: NavController, route: String) {
+    controller.navigate(route) {
+        popUpTo(controller.graph.findStartDestination().id) {
             saveState = true
         }
         launchSingleTop = true
@@ -17,34 +17,46 @@ fun goToNavbarRoute(controller: NavController, route: String){
     }
 }
 
-fun NavController.goBack(){
+fun NavController.goBack() {
     this.navigateUp()
 }
 
-fun NavController.openMain(){
-    this.navigate(Routes.Main){
+fun NavController.openMain() {
+    this.navigate(Routes.Main) {
         launchSingleTop = true
         restoreState = true
         popBackStack()
     }
 }
 
-fun NavController.openBookmarks(){
+fun NavController.openBookmarks() {
     goToNavbarRoute(this, Routes.Bookmarks)
 }
 
-fun NavController.openGroups(){
+fun NavController.openGroups() {
     goToNavbarRoute(this, Routes.Groups)
 }
 
-fun NavController.openAddBookmark(){
+fun NavController.openAddBookmark() {
     this.navigate(Routes.AddBookmark)
 }
 
-fun NavController.openAddGroup(){
+fun NavController.openAddGroup() {
     this.navigate(Routes.AddGroup)
 }
 
-fun NavController.openBookmark(id: ObjectId){
+fun NavController.openBookmark(id: ObjectId) {
     this.navigate("${Routes.Bookmark}/${id.toHexString()}")
+}
+
+fun NavController.openGroup(id: ObjectId) {
+    this.navigate("${Routes.Group}/${id.toHexString()}")
+}
+
+fun NavController.openSettings(){
+    this.navigate(Routes.Settings)
+}
+
+fun NavController.openAbout(){
+    this.navigate(Routes.About)
 }

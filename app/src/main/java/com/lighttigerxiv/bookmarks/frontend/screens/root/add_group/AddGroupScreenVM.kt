@@ -23,36 +23,33 @@ class AddGroupScreenVM : ViewModel() {
         _name.update { v }
     }
 
-    private val _selectedBookmarks = MutableStateFlow<List<ObjectId>>(ArrayList())
-    val selectedBookmarks = _selectedBookmarks.asStateFlow()
+    private var selectedBookmarks: List<ObjectId> = ArrayList()
 
 
     fun isBookmarkSelected(bookmark: Bookmark): Boolean {
-        return selectedBookmarks.value.contains(bookmark._id)
+        return selectedBookmarks.contains(bookmark._id)
     }
 
     fun toggleBookmark(bookmark: Bookmark) {
 
-        val newList = selectedBookmarks.value.toMutableList()
+        val newList = selectedBookmarks.toMutableList()
 
-        if (selectedBookmarks.value.contains(bookmark._id)) {
+        if (selectedBookmarks.contains(bookmark._id)) {
             newList.remove(bookmark._id)
         } else {
             newList.add(bookmark._id)
         }
 
-        _selectedBookmarks.update { newList }
+        selectedBookmarks = newList
     }
 
     fun addGroup(rootController: NavHostController) {
-        viewModelScope.launch {
-            withContext(Dispatchers.Main) {
+        viewModelScope.launch(Dispatchers.Main) {
 
-                val queries = Queries(getRealm())
-                queries.addGroup(name.value, selectedBookmarks.value)
+            val queries = Queries(getRealm())
+            queries.addGroup(name.value, selectedBookmarks)
 
-                rootController.openMain()
-            }
+            rootController.openMain()
         }
     }
 }

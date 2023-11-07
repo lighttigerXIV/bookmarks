@@ -9,4 +9,5 @@ object Routes{
     const val Group = "group"
     const val AddGroup = "add_group"
     const val Settings = "settings"
+    const val About = "about"
 }

@@ -23,9 +23,6 @@ class BookmarksScreenVM(application: Application) : AndroidViewModel(application
 
     private var _currentBookmarks = MutableStateFlow<List<Bookmark>>(ArrayList())
     val currentBookmarks = _currentBookmarks.asStateFlow()
-    fun updateCurrentBookmarks(v: List<Bookmark>) {
-        _currentBookmarks.update { v }
-    }
 
     private val _searchText = MutableStateFlow("")
     val searchText = _searchText.asStateFlow()
@@ -33,12 +30,11 @@ class BookmarksScreenVM(application: Application) : AndroidViewModel(application
         _searchText.update { v }
     }
 
-    private val _showMenu = MutableStateFlow(false)
-    val showMenu = _showMenu.asStateFlow()
-    fun updateShowMenu(v: Boolean) {
-        _showMenu.update { v }
+    private val _showSearchMenu = MutableStateFlow(false)
+    val showSearchMenu = _showSearchMenu.asStateFlow()
+    fun updateShowSearchMenu(v: Boolean) {
+        _showSearchMenu.update { v }
     }
-
 
     fun initScreen(bookmarks: List<Bookmark>) {
 
@@ -52,19 +48,6 @@ class BookmarksScreenVM(application: Application) : AndroidViewModel(application
         }
 
         _currentBookmarks.update { newList }
-    }
-
-    fun openUrl(url: String) {
-
-        var validUrl = url
-
-        if (!url.startsWith("https://") || !url.startsWith("http://")) {
-            validUrl = "https://$url"
-        }
-
-        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(validUrl))
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        context.startActivity(intent)
     }
 
     fun copyUrl(url: String) {

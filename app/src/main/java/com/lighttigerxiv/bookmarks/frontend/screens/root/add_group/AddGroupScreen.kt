@@ -25,6 +25,10 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -48,16 +52,14 @@ import com.lighttigerxiv.bookmarks.frontend.composables.VerticalSpacer
 
 @Composable
 fun AddGroupScreen(
-    rootController: NavHostController
+    rootController: NavHostController,
+    appVM: AppVM
 ) {
 
-    val appVM: AppVM = viewModel()
     val vm: AddGroupScreenVM = viewModel()
 
     val name = vm.name.collectAsState().value
     val bookmarks = appVM.bookmarks.collectAsState().value
-    val selectedBookmarks = vm.selectedBookmarks.collectAsState().value
-
 
     Column(
         modifier = Modifier
@@ -71,7 +73,7 @@ fun AddGroupScreen(
             modifier = Modifier
                 .fillMaxHeight()
                 .weight(1f, fill = true)
-        ){
+        ) {
 
             item {
 
@@ -129,12 +131,17 @@ fun BookmarkCard(
     vm: AddGroupScreenVM
 ) {
 
+    var isSelected by remember { mutableStateOf(false) }
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
             .background(MaterialTheme.colorScheme.surfaceVariant)
-            .clickable { vm.toggleBookmark(bookmark) }
+            .clickable {
+                vm.toggleBookmark(bookmark)
+                isSelected = vm.isBookmarkSelected(bookmark)
+            }
             .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -157,7 +164,7 @@ fun BookmarkCard(
         }
 
 
-        if (vm.isBookmarkSelected(bookmark)) {
+        if (isSelected) {
 
             Icon(
                 modifier = Modifier

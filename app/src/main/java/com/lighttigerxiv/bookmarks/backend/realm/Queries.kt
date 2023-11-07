@@ -27,15 +27,29 @@ class Queries(private val realm: Realm) {
         }
     }
 
-    suspend fun updateBookmark(id: ObjectId, name: String, url: String, onFinish: () -> Unit = {}) {
+    suspend fun updateBookmark(id: ObjectId, name: String, url: String) {
         realm.write {
             val bookmark: Bookmark? = this.query<Bookmark>("_id == $0", id).first().find()
             bookmark?.name = name
             bookmark?.url = url
-            onFinish()
+        }
+    }
+
+    suspend fun deleteBookmark(id: ObjectId) {
+        realm.write {
+            val bookmark: Bookmark = query<Bookmark>("_id == $0", id).find().first()
+            delete(bookmark)
         }
 
-        realm.close()
+        val groups = getGroups().filter { it.bookmarks.contains(id) }
+
+        for (group in groups) {
+            updateGroup(
+                group._id,
+                group.name,
+                group.bookmarks.filter { it != id }
+            )
+        }
     }
 
     fun getGroups(): List<Group> {
@@ -53,7 +67,20 @@ class Queries(private val realm: Realm) {
         realm.write {
             copyToRealm(group)
         }
+    }
 
-        realm.close()
+    suspend fun updateGroup(id: ObjectId, name: String, bookmarks: List<ObjectId>) {
+        realm.write {
+            val group: Group = query<Group>("_id == $0", id).find().first()
+            group.name = name
+            group.bookmarks = bookmarks.toRealmList()
+        }
+    }
+
+    suspend fun deleteGroup(id: ObjectId) {
+        realm.write {
+            val group: Group = query<Group>("_id == $0", id).find().first()
+            delete(group)
+        }
     }
 }
