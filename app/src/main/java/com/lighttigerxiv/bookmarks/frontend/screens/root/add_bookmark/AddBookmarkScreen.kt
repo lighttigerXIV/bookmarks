@@ -12,15 +12,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
-import com.lighttigerxiv.bookmarks.frontend.AppVM
 import com.lighttigerxiv.bookmarks.frontend.composables.NormalText
 import com.lighttigerxiv.bookmarks.frontend.composables.PrimaryButton
 import com.lighttigerxiv.bookmarks.frontend.composables.SpacerSize
 import com.lighttigerxiv.bookmarks.frontend.composables.TextField
 import com.lighttigerxiv.bookmarks.frontend.composables.Toolbar
 import com.lighttigerxiv.bookmarks.frontend.composables.VerticalSpacer
-import com.lighttigerxiv.bookmarks.frontend.navigation.goBack
-import com.lighttigerxiv.bookmarks.frontend.navigation.openMain
 
 
 @Composable

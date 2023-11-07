@@ -5,14 +5,12 @@ import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavHostController
 import com.lighttigerxiv.bookmarks.backend.realm.Queries
 import com.lighttigerxiv.bookmarks.backend.realm.getRealm
-import com.lighttigerxiv.bookmarks.frontend.AppVM
 import com.lighttigerxiv.bookmarks.frontend.navigation.openMain
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 class AddBookmarkScreenVM : ViewModel() {
 

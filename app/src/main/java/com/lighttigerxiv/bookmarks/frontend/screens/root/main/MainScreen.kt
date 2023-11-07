@@ -17,11 +17,9 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.BottomSheetScaffold
-import androidx.compose.material.BottomSheetScaffoldState
 import androidx.compose.material.BottomSheetState
 import androidx.compose.material.BottomSheetValue
 import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material.ScaffoldState
 import androidx.compose.material.rememberBottomSheetScaffoldState
 import androidx.compose.material.rememberBottomSheetState
 import androidx.compose.material3.Icon
@@ -33,11 +31,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.ViewModelStoreOwner
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -55,7 +50,6 @@ import com.lighttigerxiv.bookmarks.frontend.navigation.openAddBookmark
 import com.lighttigerxiv.bookmarks.frontend.navigation.openAddGroup
 import com.lighttigerxiv.bookmarks.frontend.navigation.openBookmarks
 import com.lighttigerxiv.bookmarks.frontend.navigation.openGroups
-import com.lighttigerxiv.bookmarks.frontend.screens.root.main.bookmarks.BookmarksScreenVM
 import com.lighttigerxiv.bookmarks.frontend.screens.root.main.bookmarks.BookmarksScreen
 import com.lighttigerxiv.bookmarks.frontend.screens.root.main.groups.GroupsScreen
 import kotlinx.coroutines.launch
